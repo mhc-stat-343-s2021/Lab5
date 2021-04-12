@@ -1,0 +1,84 @@
+---
+title: "Large-sample approximate sampling distribution of the MLE: Pareto Distribution"
+subtitle: "STAT 343: Mathematical Statistics"
+output:
+  pdf_document:
+    keep_tex: true
+header-includes:
+   - \usepackage{booktabs}
+geometry: margin=1.5cm
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+\def\simiid{\stackrel{{\mbox{\text{\tiny i.i.d.}}}}{\sim}}
+
+# Sampling Distribution of the MLE
+
+## Fire Insurance Losses
+
+We will work with a data set with losses due to fires covered by Copenhagen Reinsurance.  There are 2167 fire losses over the time period from 1980 to 1990.  The loss amounts are in millions of Danish Krone (DKK), inflation adjusted to 1985 values.  The minimum loss covered was 1 million DKK, so the smallest observation in the data set is 1 (apparently the inflation adjustment did not affect that observation, or it was rounded up to 1 million if so).
+
+References:
+
+McNeil, A. (1996), Estimating the Tails of Loss Severity Distributions using Extreme Value Theory, ASTIN Bull
+
+Davison, A. C. (2003) Statistical Models. Cambridge University Press. Page 278.
+
+Dutang, C. (2019) CASdatasets: Insurance datasets.  https://github.com/dutangc/CASdatasets
+
+The following code reads in the data and makes a plot:
+
+```{r, warn = FALSE, message = FALSE, fig.height = 2}
+fire_losses <- read_csv("http://www.evanlray.com/data/CAS/danishuni.csv")
+ggplot(data = fire_losses, mapping = aes(x = Loss)) +
+  geom_histogram(mapping = aes(y = ..density..), boundary = 0, bins = 100) +
+  theme_bw()
+```
+
+Here is a summary of the loss amounts:
+
+```{r}
+summary(fire_losses$Loss)
+```
+
+We can see from these results that the losses are skewed right, with a minimum value of 1.  A probability model for random variables with these characteristics is the Pareto distribution.  The Pareto distribution has two parameters, $x_0 > 0$ and $\theta > 0$.  If $X \sim \text{Pareto}(x_0, \theta)$, then its probability density function (pdf) is:
+
+$f(x | x_0, \theta) = \frac{\theta x_0^\theta}{x^{\theta + 1}}$ on the support $x \in [x_0, \infty)$.
+
+In our case, the lower bound of the support of the distribution is 1, since the minimum covered loss by this insurance company was 1 million DKK.  Let's fix $x_0 = 1$ and think about how we might estimate the parameter $\theta$.  Our model is
+
+$X_1, \ldots, X_n \simiid \text{Pareto}(1, \theta)$.
+
+Suppose that $\theta > 2$.  In that case, $E(X_i) = \frac{\theta}{\theta - 1}$ and $Var(X_i) = \frac{\theta}{(\theta - 1)^2(\theta - 2)}$
+
+Let's fix $x_0 = 1$ and think about how we might estimate the parameter $\theta$.
+
+## Strategy 1: Method of Moments
+
+It can be shown that the method of moments estimator is $\hat{\Theta}^{MoM} = \frac{\bar{X}}{\bar{X} - 1}$ (you should know how to do this).
+
+## Strategy 2: Maximum Likelihood
+
+The log-likelihood for a Pareto distribution is given by
+
+$\ell(\theta | x_1, \ldots, x_n, x_0) = n \log(\theta) + n \theta \log(x_0) - (\theta + 1) \sum_{i = 1}^n \log(x_i)$.
+
+The first derivative of the log-likelihood is 
+
+$\frac{d}{d\theta} \ell(\theta | x_1, \ldots, x_n, x_0) = \frac{n}{\theta} + n \log(x_0) - \sum_{i = 1}^n \log(x_i)$.
+
+The second derivative of the log-likelihood is 
+
+$\frac{d^2}{d\theta^2} \ell(\theta | x_1, \ldots, x_n, x_0) = \frac{-n}{\theta^2}$.
+
+Note that when $x_0 = 1$, $\log(x_0) = 0$.
+
+The maximum likelihood estimator therefore satisfies the equation $0 = \frac{n}{\theta} - \sum_{i = 1}^n \log(x_i)$, so $\hat{\Theta}^{MLE} = \frac{n}{\sum_{i = 1}^n \log(X_i)}$
+
+## Asymptotic Distribution of the MLE
+
+Find a normal approximation to the sampling distribution of $\hat{\alpha}^{MLE}$ that is accurate for large sample sizes.  This will depend on the sample size $n$ and the true value of the parameter.  Is there any difference between the observed Fisher information and the Fisher information in this case?
